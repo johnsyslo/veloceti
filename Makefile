@@ -16,12 +16,14 @@ install:
 	npm install
 
 dev:
+	docker compose up -d
 	npm run dev
 
 build:
 	npm run build
 
 preview:
+	docker compose up
 	npm run preview
 
 check:

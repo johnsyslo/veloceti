@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    platform: linux/amd64
+    container_name: veloceti_db
+    restart: always
+    environment:
+      POSTGRES_DB: veloceti_spatial
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: your_secure_password
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+
+volumes:
+  postgis_data:
