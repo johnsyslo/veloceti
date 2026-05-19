@@ -1,7 +1,7 @@
 .PHONY: help install dev build preview check check-watch lint format clean prepare
 
 help:
-	@echo "Portfolio Makefile targets:"
+	@echo "Veloceti Makefile targets:"
 	@echo "  install       - Install dependencies"
 	@echo "  dev           - Start development server"
 	@echo "  build         - Build for production"
