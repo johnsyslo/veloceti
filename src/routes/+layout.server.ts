@@ -1,12 +1,12 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './login/$types';
-import sql from '$lib/server/db';
+import { sql } from '$lib/server/db';
 
 export const load: LayoutServerLoad = async (event) => {
 	const session = await event.locals.getSession();
 	const url = new URL(event.request.url);
 
-	if (!session && url.pathname === '/dashboard') {
+	if (!session && url.pathname !== '/login') {
 		throw redirect(303, '/login');
 	}
 
@@ -16,8 +16,11 @@ export const load: LayoutServerLoad = async (event) => {
 
 	let postgisVersion = 'Unknown';
 	try {
-		const result = await sql`SELECT PostGIS_version();`;
-		if (result.length > 0) {
+		const result = await Promise.race([
+			sql`SELECT PostGIS_version();`,
+			new Promise((_, reject) => setTimeout(() => reject(new Error('DB query timeout')), 5000))
+		]);
+		if (Array.isArray(result) && result.length > 0) {
 			postgisVersion = result[0].postgis_version;
 		}
 	} catch (error) {
