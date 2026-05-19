@@ -1,0 +1,22 @@
+[
+	{
+		"href": "/dashboard",
+		"label": "Dashboard",
+		"icon": "📊"
+	},
+	{
+		"href": "/activities",
+		"label": "Activities",
+		"icon": "📋"
+	},
+	{
+		"href": "/goals",
+		"label": "Goals",
+		"icon": "🎯"
+	},
+	{
+		"href": "/upload",
+		"label": "Upload",
+		"icon": "📥"
+	}
+]

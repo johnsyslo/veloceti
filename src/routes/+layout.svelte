@@ -2,8 +2,15 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 
-	let { children } = $props();
+	import Navbar from '$lib/components/navbar/Navbar.svelte';
+	let { children, data } = $props();
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
-{@render children()}
+<div class="flex min-h-screen w-full bg-neutral-950 text-neutral-100">
+	<Navbar session={data.session} />
+
+	<main class="flex-1 p-6">
+		{@render children()}
+	</main>
+</div>
