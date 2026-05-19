@@ -29,12 +29,27 @@ type SyncOptions = {
 	afterSeconds: number | null;
 };
 
-type SyncResult = {
+export type SyncResult = {
 	synced: number;
 	upserted: number;
 	pagesFetched: number;
 	perPage: number;
 	after: number | null;
+};
+
+type ActivityRow = {
+	user_id: number;
+	strava_activity_id: number;
+	title: string;
+	type: string;
+	start_time: Date;
+	distance_meters: number;
+	moving_time_seconds: number;
+	elapsed_time_seconds: number;
+	avg_speed_mps: number;
+	max_speed_mps: number | null;
+	total_elevation_gain: number | null;
+	summary_polyline: string | null;
 };
 
 const cyclingTypes = new Set([
@@ -73,6 +88,45 @@ async function refreshStravaToken(refreshToken: string) {
 	return (await response.json()) as TokenResponse;
 }
 
+function toActivityRow(userId: number, activity: StravaActivity): ActivityRow {
+	return {
+		user_id: userId,
+		strava_activity_id: activity.id,
+		title: activity.name,
+		type: activity.type ?? 'Ride',
+		start_time: new Date(activity.start_date),
+		distance_meters: activity.distance,
+		moving_time_seconds: activity.moving_time,
+		elapsed_time_seconds: activity.elapsed_time,
+		avg_speed_mps: activity.average_speed,
+		max_speed_mps: activity.max_speed ?? null,
+		total_elevation_gain: activity.total_elevation_gain ?? null,
+		summary_polyline: activity.map?.summary_polyline ?? null
+	};
+}
+
+async function upsertActivities(rows: ActivityRow[]) {
+	if (rows.length === 0) return;
+
+	await sql.begin(async (tx) => {
+		await tx`
+			INSERT INTO activities ${tx(rows)}
+			ON CONFLICT (strava_activity_id) DO UPDATE SET
+				user_id = EXCLUDED.user_id,
+				title = EXCLUDED.title,
+				type = EXCLUDED.type,
+				start_time = EXCLUDED.start_time,
+				distance_meters = EXCLUDED.distance_meters,
+				moving_time_seconds = EXCLUDED.moving_time_seconds,
+				elapsed_time_seconds = EXCLUDED.elapsed_time_seconds,
+				avg_speed_mps = EXCLUDED.avg_speed_mps,
+				max_speed_mps = EXCLUDED.max_speed_mps,
+				total_elevation_gain = EXCLUDED.total_elevation_gain,
+				summary_polyline = EXCLUDED.summary_polyline
+		`;
+	});
+}
+
 export async function getDefaultAfterSeconds(athleteId: string) {
 	const latestRows = await sql`
 		SELECT EXTRACT(EPOCH FROM MAX(a.start_time))::BIGINT AS last_start
@@ -85,6 +139,14 @@ export async function getDefaultAfterSeconds(athleteId: string) {
 		return Math.floor(lastStart);
 	}
 	return null;
+}
+
+export function syncErrorStatus(message: string): number {
+	if (message === 'User not found') return 404;
+	if (message === 'Strava tokens missing for user') return 400;
+	if (message.startsWith('Strava activities fetch failed')) return 502;
+	if (message.startsWith('Token refresh failed')) return 502;
+	return 500;
 }
 
 export async function syncStravaActivities(options: SyncOptions): Promise<SyncResult> {
@@ -160,53 +222,9 @@ export async function syncStravaActivities(options: SyncOptions): Promise<SyncRe
 		);
 		synced += cyclingActivities.length;
 
-		for (const activity of cyclingActivities) {
-			await sql`
-				INSERT INTO activities (
-					user_id,
-					strava_activity_id,
-					title,
-					type,
-					start_time,
-					distance_meters,
-					moving_time_seconds,
-					elapsed_time_seconds,
-					avg_speed_mps,
-					max_speed_mps,
-					total_elevation_gain,
-					summary_polyline,
-					geom_route
-				)
-				VALUES (
-					${user.id},
-					${activity.id},
-					${activity.name},
-					${activity.type ?? 'Ride'},
-					${new Date(activity.start_date)},
-					${activity.distance},
-					${activity.moving_time},
-					${activity.elapsed_time},
-					${activity.average_speed},
-					${activity.max_speed ?? null},
-					${activity.total_elevation_gain ?? null},
-					${activity.map?.summary_polyline ?? null},
-					${null}
-				)
-				ON CONFLICT (strava_activity_id) DO UPDATE SET
-					user_id = EXCLUDED.user_id,
-					title = EXCLUDED.title,
-					type = EXCLUDED.type,
-					start_time = EXCLUDED.start_time,
-					distance_meters = EXCLUDED.distance_meters,
-					moving_time_seconds = EXCLUDED.moving_time_seconds,
-					elapsed_time_seconds = EXCLUDED.elapsed_time_seconds,
-					avg_speed_mps = EXCLUDED.avg_speed_mps,
-					max_speed_mps = EXCLUDED.max_speed_mps,
-					total_elevation_gain = EXCLUDED.total_elevation_gain,
-					summary_polyline = EXCLUDED.summary_polyline
-			`;
-			upserted += 1;
-		}
+		const rows = cyclingActivities.map((activity) => toActivityRow(user.id, activity));
+		await upsertActivities(rows);
+		upserted += rows.length;
 
 		if (activities.length < perPage) break;
 		page += 1;
