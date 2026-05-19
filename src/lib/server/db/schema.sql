@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255),
@@ -28,8 +26,8 @@ CREATE TABLE activities (
   max_speed_mps REAL,
   total_elevation_gain REAL,
 
-  summary_polyline TEXT,
-  geom_route GEOMETRY(LineString, 4326)
+  -- Encoded route from Strava (Google polyline format) for map rendering
+  summary_polyline TEXT
 );
 
 CREATE TABLE activity_streams (
@@ -48,5 +46,4 @@ CREATE TABLE activity_streams (
 
 CREATE INDEX IF NOT EXISTS idx_activities_user ON activities(user_id);
 CREATE INDEX IF NOT EXISTS idx_activities_start ON activities(start_time DESC);
-CREATE INDEX IF NOT EXISTS idx_activities_spatial ON activities USING GIST(geom_route);
 CREATE INDEX IF NOT EXISTS idx_streams_activity ON activity_streams(activity_id);

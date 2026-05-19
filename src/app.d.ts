@@ -16,23 +16,13 @@ declare global {
 
 declare module '@auth/core/types' {
 	interface Session {
-		accessToken?: string;
-		refreshToken?: string;
-		expiresAt?: number;
-		scope?: string;
 		stravaAthleteId?: string;
-		error?: string;
 	}
 }
 
 declare module '@auth/core/jwt' {
 	interface JWT {
-		accessToken?: string;
-		refreshToken?: string;
-		expiresAt?: number;
-		scope?: string;
 		stravaAthleteId?: string;
-		error?: string;
 	}
 }
 

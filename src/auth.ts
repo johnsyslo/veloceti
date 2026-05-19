@@ -1,23 +1,7 @@
 import { SvelteKitAuth } from '@auth/sveltekit';
 import Strava from '@auth/core/providers/strava';
-import {
-	STRAVA_CLIENT_ID,
-	STRAVA_CLIENT_SECRET,
-	AUTH_SECRET,
-	DATABASE_URL
-} from '$env/static/private';
-import sql from 'postgres';
-
-console.log('DATABASE_URL:', DATABASE_URL ? 'SET' : 'NOT SET');
-
-let pool: ReturnType<typeof sql> | null = null;
-
-function initPool(): ReturnType<typeof sql> {
-	if (!pool) {
-		pool = sql(DATABASE_URL);
-	}
-	return pool;
-}
+import { STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, AUTH_SECRET } from '$env/static/private';
+import { sql } from '$lib/server/db';
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
 	providers: [
@@ -34,26 +18,22 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 	trustHost: true,
 	callbacks: {
 		async jwt({ token, account, profile }) {
-			if (account) {
-				token.accessToken = account.access_token;
-				token.refreshToken = account.refresh_token;
-				token.expiresAt = account.expires_at;
-				token.scope = account.scope;
-				token.stravaAthleteId = profile?.id?.toString();
-				token.name = profile?.firstname
-					? `${profile.firstname} ${profile.lastname}`
-					: profile?.name;
-				token.email = profile?.email;
-				token.image = profile?.profile_medium;
+			if (account && profile) {
+				token.stravaAthleteId = profile.id?.toString();
+				token.name = profile.firstname
+					? `${profile.firstname} ${profile.lastname ?? ''}`.trim()
+					: profile.name;
+				token.email = profile.email;
+				token.picture =
+					typeof profile.profile_medium === 'string' ? profile.profile_medium : undefined;
 			}
 			return token;
 		},
 		async session({ session, token }) {
-			if (token.accessToken) {
-				session.accessToken = token.accessToken;
-				session.refreshToken = token.refreshToken;
-				session.expiresAt = token.expiresAt;
-				session.scope = token.scope;
+			if (session.user) {
+				if (token.name) session.user.name = token.name;
+				if (token.email) session.user.email = token.email;
+				if (token.picture) session.user.image = token.picture;
 			}
 			if (token.stravaAthleteId) {
 				session.stravaAthleteId = token.stravaAthleteId;
@@ -64,8 +44,6 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 			if (!account || !profile) return false;
 
 			try {
-				const db = initPool();
-
 				const firstName = typeof profile.firstname === 'string' ? profile.firstname : undefined;
 				const lastName = typeof profile.lastname === 'string' ? profile.lastname : undefined;
 				const profileName = typeof profile.name === 'string' ? profile.name : null;
@@ -85,9 +63,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 				const expiresAt = typeof account.expires_at === 'number' ? account.expires_at : null;
 				const scope = account.scope || 'read,activity:read_all';
 
-				console.log('Upserting user:', { name, athleteId });
-
-				await db`
+				await sql`
 					INSERT INTO users (name, email, image, strava_athlete_id, refresh_token, access_token, expires_at, scope)
 					VALUES (${name}, ${profileEmail}, ${profileImage}, ${athleteId}, ${refreshToken}, ${accessToken}, ${expiresAt}, ${scope})
 					ON CONFLICT (strava_athlete_id) DO UPDATE SET
