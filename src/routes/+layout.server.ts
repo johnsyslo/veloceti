@@ -1,9 +1,9 @@
 import { redirect } from '@sveltejs/kit';
-import type { LayoutServerLoad } from './login/$types';
+import type { LayoutServerLoad } from './$types';
 import { sql } from '$lib/server/db';
 
 export const load: LayoutServerLoad = async (event) => {
-	const session = await event.locals.getSession();
+	const session = await event.locals.auth();
 	const url = new URL(event.request.url);
 
 	if (!session && url.pathname !== '/login') {

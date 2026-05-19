@@ -1,38 +1,52 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
 
-CREATE TABLE IF NOT EXISTS activities (
-    id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    strava_id BIGINT UNIQUE,
-    name TEXT NOT NULL,
-    distance FLOAT,
-    moving_time INTEGER,
-    elapsed_time INTEGER,
-    total_elevation_gain FLOAT,
-    start_date TIMESTAMP,
-    avg_speed FLOAT,
-    max_speed FLOAT,
-    avg_heartrate FLOAT,
-    max_heartrate INTEGER,
-    avg_cadence FLOAT,
-    avg_watts FLOAT,
-    max_watts INTEGER,
-    kilojoules FLOAT,
-    summary_polyline TEXT
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255),
+  email VARCHAR(255) UNIQUE,
+  image TEXT,
+
+  strava_athlete_id VARCHAR(255) UNIQUE,
+  refresh_token TEXT NOT NULL,
+  access_token TEXT NOT NULL,
+  expires_at INTEGER NOT NULL,
+  scope VARCHAR(255)
 );
 
-CREATE TABLE IF NOT EXISTS activity_streams (
-    id SERIAL PRIMARY KEY,
-    activity_id INTEGER REFERENCES activities(id) ON DELETE CASCADE,
-    time_index INTEGER,
-    velocity_smooth FLOAT,
-    heartrate INTEGER,
-    cadence INTEGER,
-    watts FLOAT,
-    altitude FLOAT,
-    grade_smooth FLOAT,
-    geom GEOMETRY(Point, 4326)
+CREATE TABLE activities (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  strava_activity_id BIGINT UNIQUE,
+  title VARCHAR(255) NOT NULL,
+  type VARCHAR(50) DEFAULT 'Ride',
+  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+
+  distance_meters REAL NOT NULL,
+  moving_time_seconds INTEGER NOT NULL,
+  elapsed_time_seconds INTEGER NOT NULL,
+  avg_speed_mps REAL NOT NULL,
+  max_speed_mps REAL,
+  total_elevation_gain REAL,
+
+  summary_polyline TEXT,
+  geom_route GEOMETRY(LineString, 4326)
 );
 
-CREATE INDEX IF NOT EXISTS idx_activity_streams_geom ON activity_streams USING GIST (geom);
-CREATE INDEX IF NOT EXISTS idx_activity_streams_activity_id ON activity_streams(activity_id);
+CREATE TABLE activity_streams (
+  id BIGSERIAL PRIMARY KEY,
+  activity_id INTEGER NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
+
+  time_offsets INTEGER[] NOT NULL,
+  latitudes DOUBLE PRECISION[],
+  longitudes DOUBLE PRECISION[],
+  speeds REAL[],
+  altitudes REAL[],
+  cadence INTEGER[],
+  watts INTEGER[],
+  heartrate INTEGER[]
+);
+
+CREATE INDEX IF NOT EXISTS idx_activities_user ON activities(user_id);
+CREATE INDEX IF NOT EXISTS idx_activities_start ON activities(start_time DESC);
+CREATE INDEX IF NOT EXISTS idx_activities_spatial ON activities USING GIST(geom_route);
+CREATE INDEX IF NOT EXISTS idx_streams_activity ON activity_streams(activity_id);
