@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
+	import type { RouteId } from '$app/types';
 	import { onMount } from 'svelte';
 	import { signOut } from '@auth/sveltekit/client';
 	import navLinks from './nav-links.json';
@@ -7,29 +9,31 @@
 	interface Props {
 		session?: {
 			user?: {
-				name?: string;
-				email?: string;
-				image?: string;
+				name?: string | null;
+				email?: string | null;
+				image?: string | null;
 			};
-		};
+		} | null;
 	}
 
 	let { session }: Props = $props();
 	let dbConnected = $state(false);
 
-	onMount(async () => {
+	onMount(() => {
 		const checkConnection = async () => {
 			try {
 				const response = await fetch('/api/health');
 				const data = await response.json();
 				dbConnected = data.status === 'connected';
-			} catch (error) {
+			} catch {
 				dbConnected = false;
 			}
 		};
 
-		await checkConnection();
-		const interval = setInterval(checkConnection, 5000);
+		void checkConnection();
+		const interval = setInterval(() => {
+			void checkConnection();
+		}, 5000);
 
 		return () => clearInterval(interval);
 	});
@@ -39,10 +43,10 @@
 	};
 </script>
 
-<nav class="top-0 left-0 flex">
+<nav class="fixed top-0 left-0 z-50 flex">
 	<div class="flex h-screen w-64 flex-col border-r border-neutral-800 bg-neutral-900 px-4 py-4">
 		<a
-			href="/dashboard"
+			href={resolve('/dashboard')}
 			class="mb-8 px-4 py-2 text-lg font-semibold text-neutral-100 uppercase transition-colors hover:text-white"
 		>
 			Veloceti<span class={`${dbConnected ? 'text-green-500' : 'animate-pulse text-red-500'}`}
@@ -53,7 +57,7 @@
 		<nav class="space-y-2">
 			{#each navLinks as link (link)}
 				<a
-					href={link.href}
+					href={resolve(link.href as RouteId)}
 					class="flex items-center gap-3 rounded-lg px-4 py-2 transition-colors {$page.url
 						.pathname === link.href
 						? 'bg-blue-600 text-white'
@@ -105,7 +109,7 @@
 					</button>
 				{:else}
 					<a
-						href="/login"
+						href={resolve('/login')}
 						class="block w-full rounded-lg px-4 py-2 text-center text-sm text-white transition-colors"
 						style="background-color: var(--primary);"
 					>

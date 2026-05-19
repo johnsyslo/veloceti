@@ -10,7 +10,7 @@
 <div class="flex min-h-screen w-full bg-neutral-950 text-neutral-100">
 	<Navbar session={data.session} />
 
-	<main class="flex-1 p-6">
+	<main class="ml-64 flex-1 p-6">
 		{@render children()}
 	</main>
 </div>
