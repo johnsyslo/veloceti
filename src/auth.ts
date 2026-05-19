@@ -10,6 +10,9 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 			authorization: { params: { scope: 'read,activity:read_all' } }
 		})
 	],
+	pages: {
+		signIn: '/login'
+	},
 	secret: AUTH_SECRET,
 	trustHost: true
 });
