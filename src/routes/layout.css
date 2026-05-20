@@ -6,3 +6,8 @@
 	--tertiary: #223827;
 	--quaternary: #1b2a1e;
 }
+
+html {
+	background-color: #0a0a0a;
+	scrollbar-gutter: stable;
+}
