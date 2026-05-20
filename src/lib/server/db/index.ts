@@ -14,13 +14,10 @@ export const sql = postgres(DATABASE_URL, {
 export async function testConnection() {
 	try {
 		await sql`SELECT 1`;
-		return { status: 'connected', timestamp: new Date().toISOString() };
+		return { status: 'connected' as const, timestamp: new Date().toISOString() };
 	} catch (error) {
-		return {
-			status: 'disconnected',
-			error: error instanceof Error ? error.message : 'Unknown error',
-			timestamp: new Date().toISOString()
-		};
+		console.error('Database health check failed:', error);
+		return { status: 'disconnected' as const, timestamp: new Date().toISOString() };
 	}
 }
 

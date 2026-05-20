@@ -5,5 +5,5 @@ export async function GET() {
 	const result = await testConnection();
 	const status = result.status === 'connected' ? 200 : 503;
 
-	return json(result, { status });
+	return json({ status: result.status, timestamp: result.timestamp }, { status });
 }

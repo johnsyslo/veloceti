@@ -141,14 +141,6 @@ export async function getDefaultAfterSeconds(athleteId: string) {
 	return null;
 }
 
-export function syncErrorStatus(message: string): number {
-	if (message === 'User not found') return 404;
-	if (message === 'Strava tokens missing for user') return 400;
-	if (message.startsWith('Strava activities fetch failed')) return 502;
-	if (message.startsWith('Token refresh failed')) return 502;
-	return 500;
-}
-
 export async function syncStravaActivities(options: SyncOptions): Promise<SyncResult> {
 	const { athleteId, perPage, afterSeconds } = options;
 
