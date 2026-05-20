@@ -4,7 +4,6 @@ import { handle as authHandle } from './auth';
 import { getInternalApiKey, verifyApiKey } from '$lib/server/security/api-key';
 import type { Handle } from '@sveltejs/kit';
 
-// Fail fast at startup if INTERNAL_API_KEY is missing.
 getInternalApiKey();
 
 const PUBLIC_API_PATHS = new Set(['/api/health']);
