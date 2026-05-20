@@ -1,9 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { verifyApiKey } from '$lib/server/security/api-key';
-import {
-	getDefaultAfterSeconds,
-	syncStravaActivities
-} from '$lib/server/strava/sync';
+import { getDefaultAfterSeconds, syncStravaActivities } from '$lib/server/strava/sync';
 import { syncErrorStatus, toPublicSyncError } from '$lib/server/strava/sync-errors';
 
 export async function POST({ url, request }) {
