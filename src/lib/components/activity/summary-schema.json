@@ -1,0 +1,29 @@
+[
+	{
+		"title": "Speed & Power",
+		"items": [
+			{ "label": "Average Speed", "path": "activity.avgSpeedMph", "suffix": " mph" },
+			{ "label": "Max Speed", "path": "activity.maxSpeedMph", "suffix": " mph" },
+			{ "label": "Average Power", "path": "analytics.power.avg", "suffix": " W" },
+			{ "label": "Max Power", "path": "analytics.power.max", "suffix": " W" }
+		]
+	},
+	{
+		"title": "Heart Rate & Cadence",
+		"items": [
+			{ "label": "Average Heart Rate", "path": "analytics.heartrate.avg", "suffix": " bpm" },
+			{ "label": "Max Heart Rate", "path": "analytics.heartrate.max", "suffix": " bpm" },
+			{ "label": "Average Cadence", "path": "analytics.cadence.avg", "suffix": " rpm" },
+			{ "label": "Max Cadence", "path": "analytics.cadence.max", "suffix": " rpm" }
+		]
+	},
+	{
+		"title": "Time & Elevation",
+		"items": [
+			{ "label": "Moving Time", "path": "activity.duration", "suffix": "" },
+			{ "label": "Elapsed Time", "path": "activity.elapsedTime", "suffix": "" },
+			{ "label": "Elevation Gain", "path": "activity.elevationGainFt", "suffix": " ft" },
+			{ "label": "Device Start Offset", "path": "activity.startTime", "suffix": "" }
+		]
+	}
+]
