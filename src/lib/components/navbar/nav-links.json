@@ -15,8 +15,8 @@
 		"icon": "🎯"
 	},
 	{
-		"href": "/upload",
-		"label": "Upload",
+		"href": "/import",
+		"label": "Import",
 		"icon": "📥"
 	}
 ]
