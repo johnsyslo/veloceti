@@ -2,6 +2,9 @@
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
+	import PageHeader from '$lib/components/PageHeader.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import StatCard from '$lib/components/StatCard.svelte';
 
 	let isSyncing = $state(false);
 
@@ -10,14 +13,7 @@
 </script>
 
 <div class="mx-auto max-w-5xl px-4 py-8">
-	<header class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-		<div>
-			<h1 class="text-3xl font-semibold tracking-tight text-neutral-50">Dashboard</h1>
-			<p class="mt-1 text-neutral-500">
-				Welcome back, {$page.data.session?.user?.name || 'User'}
-			</p>
-		</div>
-
+	<PageHeader title="Dashboard" subtitle="Welcome back, {$page.data.session?.user?.name || 'User'}">
 		<form
 			method="POST"
 			action="?/sync"
@@ -37,55 +33,31 @@
 				{isSyncing ? 'Syncing...' : 'Sync from Strava'}
 			</button>
 		</form>
-	</header>
+	</PageHeader>
 
 	{#if $page.form?.success}
-		<p class="mb-6 rounded-lg border border-green-900/50 bg-green-950/30 px-4 py-3 text-sm text-green-400">
+		<p
+			class="mb-6 rounded-lg border border-green-900/50 bg-green-950/30 px-4 py-3 text-sm text-green-400"
+		>
 			Synced {$page.form.synced ?? 0} activities from Strava.
 		</p>
 	{/if}
 	{#if $page.form?.error}
-		<p class="mb-6 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">
+		<p
+			class="mb-6 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400"
+		>
 			{$page.form.error}
 		</p>
 	{/if}
 
 	{#if !hasActivities}
-		<div
-			class="rounded-xl border border-dashed border-neutral-800 bg-neutral-900/40 px-8 py-16 text-center"
-		>
-			<p class="text-lg text-neutral-300">No activities yet</p>
-			<p class="mt-2 text-sm text-neutral-500">
-				Sync from Strava to import your rides and see stats here.
-			</p>
-		</div>
+		<EmptyState body="Sync from Strava to import your rides and see stats here." />
 	{:else}
 		<section class="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-			<div class="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
-				<p class="text-xs font-medium tracking-wide text-neutral-500 uppercase">Rides</p>
-				<p class="mt-1 tabular-nums text-2xl font-semibold text-neutral-100">
-					{summary.rideCount}
-				</p>
-			</div>
-			<div class="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
-				<p class="text-xs font-medium tracking-wide text-neutral-500 uppercase">Distance</p>
-				<p class="mt-1 tabular-nums text-2xl font-semibold text-neutral-100">
-					{summary.totalDistanceMiles}
-					<span class="text-sm font-normal text-neutral-500">mi</span>
-				</p>
-			</div>
-			<div class="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
-				<p class="text-xs font-medium tracking-wide text-neutral-500 uppercase">Moving time</p>
-				<p class="mt-1 tabular-nums text-2xl font-semibold text-neutral-100">
-					{summary.totalMovingTime}
-				</p>
-			</div>
-			<div class="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
-				<p class="text-xs font-medium tracking-wide text-neutral-500 uppercase">Latest ride</p>
-				<p class="mt-1 text-2xl font-semibold text-neutral-100">
-					{summary.latestRideDate ?? '—'}
-				</p>
-			</div>
+			<StatCard label="Rides" value={summary.rideCount} />
+			<StatCard label="Distance" value={summary.totalDistanceMiles} unit="mi" />
+			<StatCard label="Moving time" value={summary.totalMovingTime} />
+			<StatCard label="Latest ride" value={summary.latestRideDate} />
 		</section>
 
 		<section class="rounded-xl border border-neutral-800 bg-neutral-900/60">
