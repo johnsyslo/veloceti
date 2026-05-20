@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { ACTIVITIES_PER_PAGE } from '$lib/constants';
+import { formatDuration, metersToMiles } from '$lib/format';
 import { sql } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 
@@ -29,13 +30,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const totalCount = totalRows[0].count ?? 0;
 	const totalPages = Math.ceil(totalCount / ACTIVITIES_PER_PAGE);
 
-	function formatDuration(seconds: number) {
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		if (hours > 0) return `${hours}h ${minutes}m`;
-		return `${minutes}m`;
-	}
-
 	const activities = await sql`
 		SELECT
 			id,
@@ -58,7 +52,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	return {
 		activities: activities.map((a) => ({
 			...a,
-			distanceMiles: (a.distance_meters / 1609.34).toFixed(2),
+			distanceMiles: metersToMiles(a.distance_meters),
 			duration: formatDuration(a.moving_time_seconds),
 			elapsedTime: formatDuration(a.elapsed_time_seconds),
 			avgSpeedMph: (a.avg_speed_mps * 2.23694).toFixed(2),
