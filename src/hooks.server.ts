@@ -1,13 +1,11 @@
 import { json } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
-import { env } from '$env/dynamic/private';
 import { handle as authHandle } from './auth';
+import { getInternalApiKey, verifyApiKey } from '$lib/server/security/api-key';
 import type { Handle } from '@sveltejs/kit';
 
-const programApiKey = env.INTERNAL_API_KEY?.trim() ?? '';
-
-/** Routes that authenticate inside the handler (session or API key). */
-const SELF_AUTH_API_PATHS = new Set(['/api/strava/sync']);
+// Fail fast at startup if INTERNAL_API_KEY is missing.
+getInternalApiKey();
 
 const PUBLIC_API_PATHS = new Set(['/api/health']);
 
@@ -16,16 +14,12 @@ const apiGuard: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-	if (PUBLIC_API_PATHS.has(event.url.pathname) || SELF_AUTH_API_PATHS.has(event.url.pathname)) {
-		return resolve(event);
-	}
-
-	if (!programApiKey) {
+	if (PUBLIC_API_PATHS.has(event.url.pathname)) {
 		return resolve(event);
 	}
 
 	const providedApiKey = event.request.headers.get('x-api-key');
-	if (providedApiKey === programApiKey) {
+	if (verifyApiKey(providedApiKey)) {
 		return resolve(event);
 	}
 
